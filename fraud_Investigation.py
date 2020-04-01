@@ -1,95 +1,65 @@
-# Load the PANDAS library
-import pandas
-fraud = pandas.read_csv('Fraud.csv',delimiter=',')
 
-# Examine a portion of the data frame
-print(fraud)
+x=np.asmatrix(fraud_df[['TOTAL_SPEND','DOCTOR_VISITS','NUM_CLAIMS','MEMBER_DURATION','OPTOM_PRESC','NUM_MEMBERS']])
 
-# Put the descriptive statistics into another dataframe
-fraud_description = fraud.groupby('FRAUD').describe()
+xtx = x.transpose() * x
+print("t(x) * x = \n", xtx)
 
-# Visualize the boxplot of the DEBTINC variable by BAD
-import matplotlib.pyplot as plt
-
-fraud.boxplot(column='TOTAL_SPEND', by='FRAUD', vert=False, figsize=(6,4))
-plt.suptitle("")
-plt.title("")
-plt.xlabel("TOTAL_SPEND")
-plt.ylabel("FRAUD")
-plt.show()
-
-fraud.boxplot(column='DOCTOR_VISITS', by='FRAUD', vert=False, figsize=(6,4))
-plt.suptitle("")
-plt.title("")
-plt.xlabel("DOCTOR_VISITS")
-plt.ylabel("FRAUD")
-plt.show()
-
-fraud.boxplot(column='NUM_CLAIMS', by='FRAUD', vert=False, figsize=(6,4))
-plt.suptitle("")
-plt.title("")
-plt.xlabel("NUM_CLAIMS")
-plt.ylabel("FRAUD")
-plt.show()
-
-fraud.boxplot(column='MEMBER_DURATION', by='FRAUD', vert=False, figsize=(6,4))
-plt.suptitle("")
-plt.title("")
-plt.xlabel("MEMBER_DURATION")
-plt.ylabel("FRAUD")
-plt.show()
-
-fraud.boxplot(column='OPTOM_PRESC', by='FRAUD', vert=False, figsize=(6,4))
-plt.suptitle("")
-plt.title("")
-plt.xlabel("OPTOM_PRESC")
-plt.ylabel("FRAUD")
-plt.show()
-
-fraud.boxplot(column='NUM_MEMBERS', by='FRAUD', vert=False, figsize=(6,4))
-plt.suptitle("")
-plt.title("")
-plt.xlabel("NUM_MEMBERS")
-plt.ylabel("FRAUD")
-plt.show()
-
-# Specify the target label
-target = fraud[['FRAUD']]
-
-# Orthonormalize the input fields
-import numpy as np
-from numpy import linalg as LA
-
-inputField = fraud[['TOTAL_SPEND', 'DOCTOR_VISITS', 'NUM_CLAIMS', 'MEMBER_DURATION', 'OPTOM_PRESC', 'NUM_MEMBERS']]
-
-# Convert the DataFrame into numpy array for easier manipulation
-x = inputField.values
-xtx = np.matmul(x.transpose(), x)
 evals, evecs = LA.eigh(xtx)
-transf = np.matmul(evecs, LA.inv(np.sqrt(np.diagflat(evals))))
-transf_x = np.matmul(x, transf)
+print("Eigenvalues of x = \n", evals)
+print("Eigenvectors of x = \n",evecs)
 
-# Show that the training data is actually orthnormalize
-check = np.matmul(transf_x.transpose(), transf_x)
-print("Does this look like an identity matrix? \n", check)
+# Here is the transformation matrix
+transf = evecs * LA.inv(np.sqrt(np.diagflat(evals)));
+print("Transformation Matrix = \n", transf)
 
-# Find the nearest neighbors
-trainData = pandas.DataFrame(transf_x)
+# Here is the transformed X
+transf_x = x * transf;
+print("The Transformed x = \n", transf_x)
 
-from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors import KNeighborsClassifier
+# Check columns of transformed X
+xtx = transf_x.transpose() * transf_x;
+print("Expect an Identity Matrix = \n", xtx)
 
-kNNSpec = KNeighborsClassifier(n_neighbors=5, algorithm = 'brute', metric = 'euclidean')
-nbrs = kNNSpec.fit(trainData, np.ravel(target))
+from sklearn.neighbors import NearestNeighbors as kNN
+
+kNNSpec = kNN(n_neighbors = 5, algorithm = 'brute', metric = 'euclidean')
+
+trainData=transf_x
+
+nbrs = kNNSpec.fit(trainData)
 distances, indices = nbrs.kneighbors(trainData)
-prediction = nbrs.predict(trainData)
-score_result = nbrs.score(trainData, target)
 
-# Find the neighbors of a specific row
-focal = [[7500., 15., 3., 127., 2., 2.]]
-transf_xf = np.matmul(focal, transf)
-dist_f, index_f = nbrs.kneighbors(pandas.DataFrame(transf_xf))
 
-for i in index_f:
-    print("Neighbor Value: \n", x[i])
-    print("Index and FRAUD: \n", target.iloc[i])
+#print("The answer to Question 3-E:\n ")
+#obs=[[7500,15,3,127,2,2]]
+#focal = obs * transf
+#print(focal)
+
+#myNeighbors = nbrs.kneighbors(focal, return_distance = False)
+#print("My Neighbors = ", myNeighbors)
+
+from sklearn.neighbors import KNeighborsClassifier
+target=fraud_df['FRAUD']
+
+neigh = KNeighborsClassifier(n_neighbors=5 , algorithm = 'brute', metric = 'euclidean')
+nbrs = neigh.fit(trainData, target)
+
+accuracy = nbrs.score(trainData, target)
+print("The answer to Question 3-D:\n ")
+print(accuracy)
+print("\n")
+########################
+
+obs=[[7500,15,3,127,2,2]]
+focal = obs * transf
+print(focal)
+print("\n")
+myNeighbors = nbrs.kneighbors(focal, return_distance = False)
+print("My Neighbors = ", myNeighbors)
+print("\n")
+########################
+
+
+res=nbrs.predict(focal)
+res_prob=nbrs.predict_proba(focal)
+print(res_prob)
