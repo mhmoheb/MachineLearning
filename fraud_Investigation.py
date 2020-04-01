@@ -30,14 +30,6 @@ nbrs = kNNSpec.fit(trainData)
 distances, indices = nbrs.kneighbors(trainData)
 
 
-#print("The answer to Question 3-E:\n ")
-#obs=[[7500,15,3,127,2,2]]
-#focal = obs * transf
-#print(focal)
-
-#myNeighbors = nbrs.kneighbors(focal, return_distance = False)
-#print("My Neighbors = ", myNeighbors)
-
 from sklearn.neighbors import KNeighborsClassifier
 target=fraud_df['FRAUD']
 
