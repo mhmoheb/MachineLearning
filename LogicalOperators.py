@@ -2,7 +2,7 @@
 """
 Created on Sun Apr  7 23:41:33 2019
 
-@author: Maryam Heidarimoheb
+
 @ Machine learning
 """
 import numpy as np
